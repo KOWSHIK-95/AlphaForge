@@ -8,9 +8,16 @@ version = "0.1.0"
 description = "A quantitative finance and portfolio analytics project"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.14",
     "pandas",
     "numpy",
+    "psycopg[binary]>=3.2",
+    "sqlalchemy>=2.0",
+    "yfinance>=0.2.54",
 ]
+
+[project.optional-dependencies]
+test = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
