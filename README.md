@@ -53,3 +53,27 @@ Install the package and test tools in editable mode with
 
 PostgreSQL repository integration tests run only when
 `ALPHAFORGE_TEST_DATABASE_URL` points to a disposable test database.
+
+## Portfolio Analytics
+
+`alphaforge.analytics.portfolio` provides weighted portfolio returns,
+cumulative returns, volatility, Sharpe ratio, maximum drawdown, asset
+correlations, historical VaR/CVaR, and long-only minimum-volatility and
+maximum-Sharpe optimizers. Portfolio inputs are pandas objects with aligned,
+complete observations; missing and non-finite data are rejected rather than
+filled or silently dropped. Weights supplied for return calculations must
+sum to one and may be short; optimizer weights are long-only and sum to one.
+
+Portfolio volatility uses sample standard deviation and can be annualized by
+`sqrt(periods_per_year)` (252 by default). Sharpe uses the existing analytics
+convention: the effective annual risk-free rate is converted to a periodic
+rate, and the resulting ratio is annualized. Optimizer expected annual return
+is the arithmetic mean periodic return multiplied by periods per year.
+Optimization and performance estimates use historical observations only and
+do not use future data.
+
+Historical VaR and CVaR are expressed as nonnegative loss fractions, not
+signed returns. VaR negates the empirical lower-tail return quantile; CVaR
+negates the average return at or below that quantile. Both use a confidence
+level strictly between zero and one. Optimization uses SciPy's SLSQP solver
+and sample covariance.

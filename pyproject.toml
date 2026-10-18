@@ -12,6 +12,7 @@ dependencies = [
     "pandas",
     "numpy",
     "psycopg[binary]>=3.2",
+    "scipy",
     "sqlalchemy>=2.0",
     "yfinance>=0.2.54",
 ]
