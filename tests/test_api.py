@@ -35,6 +35,27 @@ def test_health_is_independent_of_market_data_provider():
     assert response.json() == {"status": "ok"}
 
 
+@pytest.mark.parametrize("origin", ["http://localhost:3000", "http://127.0.0.1:3000"])
+def test_cors_allows_frontend_origins(origin):
+    response = client_for().options(
+        "/health",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+    assert "GET" in response.headers["access-control-allow-methods"]
+    assert response.headers.get("access-control-allow-credentials") is None
+
+
+def test_cors_rejects_unconfigured_origin():
+    response = client_for().get("/health", headers={"Origin": "http://localhost:4000"})
+    assert response.status_code == 200
+    assert "access-control-allow-origin" not in response.headers
+
+
 def test_market_data_serializes_validated_history_and_returns():
     history = pd.DataFrame(
         {
