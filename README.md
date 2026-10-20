@@ -143,3 +143,31 @@ use HTTP 422, an empty market-data result uses 404, and provider failures use
 502. PostgreSQL is not used by these endpoints unless an application-specific
 dependency is supplied; the existing repository and migrations remain
 available for storage workflows.
+
+## Dashboard
+
+Install the optional dashboard dependencies in editable mode:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[dashboard]"
+```
+
+Start the API in one terminal:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn alphaforge.api.app:app --reload
+```
+
+Start the Stage 1 dashboard in another terminal:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run dashboard/app.py
+```
+
+The dashboard currently provides only an Overview page. It checks
+`GET /health` through the FastAPI backend and clearly distinguishes a
+reachable API from an unavailable API. The API base URL defaults to
+`http://127.0.0.1:8000` and can be changed with `ALPHAFORGE_API_URL`.
+The dashboard does not connect directly to PostgreSQL and does not expose
+database credentials. Market Data, Portfolio Analysis, Backtesting, and
+database-status pages are not implemented yet.
