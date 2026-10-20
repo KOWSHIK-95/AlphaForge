@@ -194,3 +194,119 @@ def test_market_data_history_handles_connection_failure_and_invalid_payload():
     assert "unavailable" in unavailable.message
     assert invalid.successful is False
     assert "invalid response" in invalid.message
+
+
+def test_portfolio_analytics_sends_supported_payload():
+    def handler(request):
+        assert request.url.path == "/portfolio/analytics"
+        payload = json.loads(request.content)
+        assert payload["asset_returns"] == {"AAPL": [0.1, 0.0], "MSFT": [0.05, 0.02]}
+        assert payload["weights"] == {"AAPL": 0.5, "MSFT": 0.5}
+        return httpx.Response(200, json={"volatility": 0.1, "correlation": {}})
+
+    client, http_client = make_client(handler)
+    try:
+        result = client.portfolio_analytics(
+            {"AAPL": [0.1, 0.0], "MSFT": [0.05, 0.02]},
+            weights={"AAPL": 0.5, "MSFT": 0.5},
+        )
+    finally:
+        http_client.close()
+    assert result.successful is True
+    assert result.data["volatility"] == 0.1
+
+
+def test_portfolio_analytics_validates_before_http_and_handles_connection_failure():
+    client, http_client = make_client(lambda request: pytest.fail("HTTP should not be sent"))
+    try:
+        with pytest.raises(ValueError, match="sum to one"):
+            client.portfolio_analytics(
+                {"AAPL": [0.1, 0.0]},
+                weights={"AAPL": 0.2},
+            )
+    finally:
+        http_client.close()
+
+    unavailable_client, unavailable_http_client = make_client(
+        lambda request: (_ for _ in ()).throw(httpx.ConnectError("offline", request=request))
+    )
+    try:
+        result = unavailable_client.portfolio_analytics(
+            {"AAPL": [0.1, 0.0]},
+            weights={"AAPL": 1.0},
+        )
+    finally:
+        unavailable_http_client.close()
+    assert result.successful is False
+    assert result.status_code is None
+
+
+def test_run_backtest_constructs_request_and_parses_response():
+    def handler(request):
+        assert request.url.path == "/backtests/run"
+        payload = json.loads(request.content)
+        assert payload["strategy"] == {
+            "type": "moving_average_crossover",
+            "short_window": 2,
+            "long_window": 5,
+        }
+        assert payload["benchmark_ticker"] == "SPY"
+        return httpx.Response(
+            200,
+            json={
+                "metrics": {},
+                "equity": [],
+                "cash": [],
+                "positions": [],
+                "trades": [],
+            },
+        )
+
+    client, http_client = make_client(handler)
+    try:
+        result = client.run_backtest(
+            ["aapl", "spy"],
+            date(2025, 1, 1),
+            date(2025, 2, 1),
+            initial_capital=1000,
+            short_window=2,
+            long_window=5,
+            benchmark_ticker="spy",
+        )
+    finally:
+        http_client.close()
+    assert result.successful is True
+    assert result.data["metrics"] == {}
+
+
+def test_run_backtest_rejects_invalid_windows_and_provider_errors():
+    client, http_client = make_client(lambda request: pytest.fail("HTTP should not be sent"))
+    try:
+        with pytest.raises(ValueError, match="smaller"):
+            client.run_backtest(
+                ["AAPL"],
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                initial_capital=1000,
+                short_window=5,
+                long_window=2,
+            )
+    finally:
+        http_client.close()
+
+    failed_client, failed_http_client = make_client(
+        lambda request: httpx.Response(502, json={"detail": "provider failure"})
+    )
+    try:
+        result = failed_client.run_backtest(
+            ["AAPL"],
+            date(2025, 1, 1),
+            date(2025, 2, 1),
+            initial_capital=1000,
+            short_window=2,
+            long_window=5,
+        )
+    finally:
+        failed_http_client.close()
+    assert result.status_code == 502
+    assert "provider" in result.message
