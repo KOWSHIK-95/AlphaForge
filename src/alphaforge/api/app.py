@@ -2,6 +2,7 @@
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from alphaforge.api.dependencies import get_market_data_engine
 from alphaforge.api.models import (
@@ -23,6 +24,17 @@ app = FastAPI(
     title="AlphaForge API",
     version="0.1.0",
     description="HTTP access to AlphaForge market-data, analytics, portfolio, and backtesting engines.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 
