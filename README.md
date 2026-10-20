@@ -77,3 +77,25 @@ signed returns. VaR negates the empirical lower-tail return quantile; CVaR
 negates the average return at or below that quantile. Both use a confidence
 level strictly between zero and one. Optimization uses SciPy's SLSQP solver
 and sample covariance.
+
+## Backtesting
+
+`alphaforge.backtesting.BacktestEngine` accepts validated daily bars directly,
+or can fetch them with its `run_from_market_data` method, which delegates to
+the existing `MarketDataEngine`. Strategies implement
+`generate_target_weights(history)` and return long-only target
+weights keyed by ticker; weights may sum to less than one to retain cash.
+`MovingAverageCrossoverStrategy` is the initial example and equal-weights
+assets whose short simple moving average is above their long moving average.
+
+The timing convention is strict: on date *t*, the strategy receives bars only
+through the close of *t*. Its targets can first be executed at the open of the
+next available bar. The engine requires open prices for execution and close
+prices for end-of-day valuation; it never substitutes one for the other.
+Backtests support fractional shares, long-only positions, proportional
+transaction costs, and adverse buy/sell slippage. Benchmark comparisons use a
+buy-and-hold benchmark valued at close, starting with the same capital on the
+first simulation date. Annualization assumes `periods_per_year` observations
+per year (252 by default); annualized return is compounded over elapsed
+periods, while volatility and Sharpe reuse the portfolio analytics
+conventions.
