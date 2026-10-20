@@ -61,6 +61,15 @@ def validate_market_data(data: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(data, pd.DataFrame):
         raise TypeError("market data must be a pandas DataFrame.")
 
+    if data.empty:
+        return pd.DataFrame(
+            {
+                "date": pd.Series(dtype="datetime64[ns]"),
+                "ticker": pd.Series(dtype="object"),
+                **{column: pd.Series(dtype="float64") for column in NUMERIC_COLUMNS},
+            }
+        )
+
     required_columns = {"date", "ticker", "close"}
     missing_columns = required_columns.difference(data.columns)
     if missing_columns:
