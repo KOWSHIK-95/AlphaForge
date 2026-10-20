@@ -21,6 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest", "httpx"]
+dashboard = ["streamlit", "plotly", "httpx"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
