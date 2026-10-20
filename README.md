@@ -99,3 +99,47 @@ first simulation date. Annualization assumes `periods_per_year` observations
 per year (252 by default); annualized return is compounded over elapsed
 periods, while volatility and Sharpe reuse the portfolio analytics
 conventions.
+
+## FastAPI
+
+Install the API and test dependencies in editable mode:
+
+```powershell
+python -m pip install -e ".[test]"
+```
+
+Start the API locally with:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn alphaforge.api.app:app --reload
+```
+
+Interactive documentation is available at
+`http://127.0.0.1:8000/docs`; the generated OpenAPI schema is at
+`/openapi.json`. The API has no startup dependency on PostgreSQL or an
+external provider. Market-data requests use `YFinanceProvider` by default and
+therefore need network access; tests can inject a deterministic
+`MarketDataEngine`.
+
+Available endpoints:
+
+- `GET /health` returns `{"status": "ok"}` and checks only application health.
+- `POST /market-data/history` accepts `tickers`, inclusive `start`, exclusive
+  `end`, and optional `include_returns`.
+- `POST /analytics` accepts a `prices` array and returns returns, drawdown,
+  volatility, and Sharpe metrics where enough observations exist.
+- `POST /portfolio/analytics` accepts aligned `asset_returns`, optional
+  fully-invested `weights`, and optional `optimization` of
+  `minimum_volatility` or `maximum_sharpe`. It returns supported risk metrics
+  and correlations.
+- `POST /backtests/run` accepts either inline standardized `history` or
+  `tickers` with `start` and `end`, plus `initial_capital`, a
+  `moving_average_crossover` strategy, transaction costs, slippage, and an
+  optional benchmark ticker.
+
+Backtests retain the engine's complete daily panel requirement, next-session
+open execution, long-only positions, and accounting rules. Validation errors
+use HTTP 422, an empty market-data result uses 404, and provider failures use
+502. PostgreSQL is not used by these endpoints unless an application-specific
+dependency is supplied; the existing repository and migrations remain
+available for storage workflows.
