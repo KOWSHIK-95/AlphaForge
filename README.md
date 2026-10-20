@@ -164,10 +164,14 @@ Start the Stage 1 dashboard in another terminal:
 .\.venv\Scripts\python.exe -m streamlit run dashboard/app.py
 ```
 
-The dashboard currently provides only an Overview page. It checks
+The dashboard currently provides Overview and Market Data pages. The Market
+Data page calls `POST /market-data/history`, accepts comma-separated tickers,
+an inclusive start date, an exclusive end date, and an optional returns
+column. It displays interactive closing-price and returns charts plus the
+returned data table while preserving missing values. It checks
 `GET /health` through the FastAPI backend and clearly distinguishes a
 reachable API from an unavailable API. The API base URL defaults to
 `http://127.0.0.1:8000` and can be changed with `ALPHAFORGE_API_URL`.
 The dashboard does not connect directly to PostgreSQL and does not expose
-database credentials. Market Data, Portfolio Analysis, Backtesting, and
-database-status pages are not implemented yet.
+database credentials. Portfolio Analysis, Backtesting, and database-status
+pages are not implemented yet.
