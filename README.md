@@ -182,3 +182,55 @@ defaults to `http://127.0.0.1:8000` and can be changed with
 `ALPHAFORGE_API_URL`. The dashboard does not connect directly to PostgreSQL
 and does not expose database credentials. Ordinary dashboard tests use mocked
 HTTP responses and do not require an API, database, or internet connection.
+
+## Next.js Frontend
+
+The repository also includes a separate production-oriented frontend in
+`frontend/`. It uses Next.js App Router, React, TypeScript, Tailwind CSS,
+Plotly, and Lucide icons. It communicates with FastAPI over HTTP and does not
+connect directly to PostgreSQL or market-data providers. The existing
+Streamlit dashboard remains available as a fallback.
+
+Prerequisites:
+
+- Node.js 20 or newer.
+- The AlphaForge Python dependencies installed.
+- The FastAPI service running for live data.
+
+Install and configure the frontend:
+
+```powershell
+cd frontend
+npm install
+Copy-Item .env.example .env.local
+```
+
+Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` if the API is not running
+at `http://127.0.0.1:8000`.
+
+Start the frontend:
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Open `http://localhost:3000`. Available routes are `/`, `/market-data`,
+`/portfolio`, `/backtesting`, and `/system`.
+
+Frontend checks:
+
+```powershell
+cd frontend
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+The frontend uses the existing API contracts. Portfolio analysis first
+fetches market data, aligns complete simple-return observations, and then
+calls `/portfolio/analytics`. Backtesting exposes only the existing
+moving-average crossover strategy. Live market-provider behavior and
+PostgreSQL readiness require the backend's own configuration and are not
+claimed by the frontend without an explicit API response.
