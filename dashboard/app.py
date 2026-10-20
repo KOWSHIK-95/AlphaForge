@@ -5,6 +5,9 @@ import streamlit as st
 from dashboard.api_client import AlphaForgeApiClient
 from dashboard.config import get_api_url
 from dashboard.pages.market_data import render_market_data
+from dashboard.pages.backtesting import render_backtesting
+from dashboard.pages.portfolio_analysis import render_portfolio_analysis
+from dashboard.pages.system_status import render_system_status
 
 
 def main() -> None:
@@ -17,9 +20,21 @@ def main() -> None:
     st.title("AlphaForge")
     st.caption("Quantitative finance analysis dashboard")
 
-    page = st.sidebar.radio("Page", ["Overview", "Market Data"])
+    page = st.sidebar.radio(
+        "Page",
+        ["Overview", "Market Data", "Portfolio Analysis", "Backtesting", "System Status"],
+    )
     if page == "Market Data":
         render_market_data()
+        return
+    if page == "Portfolio Analysis":
+        render_portfolio_analysis()
+        return
+    if page == "Backtesting":
+        render_backtesting()
+        return
+    if page == "System Status":
+        render_system_status()
         return
 
     st.subheader("Overview")
