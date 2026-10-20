@@ -1,13 +1,18 @@
 """Streamlit Market Data page."""
 
+from __future__ import annotations
+
 from datetime import date, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from dashboard.api_client import AlphaForgeApiClient, MarketDataResult
+from dashboard.api_client import AlphaForgeApiClient
+
+if TYPE_CHECKING:
+    from dashboard.api_client import MarketDataResult
 
 
 def render_market_data(client: AlphaForgeApiClient | None = None) -> None:

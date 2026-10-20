@@ -10,6 +10,13 @@ import httpx
 
 from dashboard.config import get_api_url
 
+__all__ = [
+    "AlphaForgeApiClient",
+    "ApiResult",
+    "HealthResult",
+    "MarketDataResult",
+]
+
 
 @dataclass(frozen=True)
 class HealthResult:
