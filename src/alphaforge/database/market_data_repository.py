@@ -5,7 +5,11 @@ import pandas as pd
 from sqlalchemy import Engine, select
 from sqlalchemy.dialects.postgresql import insert
 
-from alphaforge.data.validation import MARKET_DATA_COLUMNS, validate_market_data
+from alphaforge.data.validation import (
+    MARKET_DATA_COLUMNS,
+    normalize_tickers,
+    validate_market_data,
+)
 from alphaforge.database.models import market_data
 
 
@@ -46,12 +50,8 @@ class MarketDataRepository:
         end: date | datetime | str,
     ) -> pd.DataFrame:
         """Retrieve daily bars for requested tickers and ``[start, end)``."""
-        symbols = [ticker.strip().upper() for ticker in tickers]
-        if not symbols:
-            return validate_market_data(pd.DataFrame(columns=MARKET_DATA_COLUMNS))
-
-        start_date = pd.Timestamp(start).date()
-        end_date = pd.Timestamp(end).date()
+        symbols = normalize_tickers(tickers)
+        start_date, end_date = _validate_date_range(start, end)
         statement = (
             select(market_data)
             .where(
@@ -64,3 +64,23 @@ class MarketDataRepository:
         with self._engine.connect() as connection:
             rows = connection.execute(statement).mappings().all()
         return validate_market_data(pd.DataFrame(rows, columns=MARKET_DATA_COLUMNS))
+
+
+def _validate_date_range(
+    start: date | datetime | str,
+    end: date | datetime | str,
+) -> tuple[date, date]:
+    if start is None or end is None:
+        raise ValueError("start and end must be valid dates.")
+    try:
+        start_timestamp = pd.Timestamp(start)
+        end_timestamp = pd.Timestamp(end)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError("start and end must be valid dates.") from error
+    if pd.isna(start_timestamp) or pd.isna(end_timestamp):
+        raise ValueError("start and end must be valid dates.")
+    start_date = start_timestamp.date()
+    end_date = end_timestamp.date()
+    if start_date >= end_date:
+        raise ValueError("start must be earlier than end.")
+    return start_date, end_date
