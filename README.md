@@ -158,20 +158,27 @@ Start the API in one terminal:
 .\.venv\Scripts\python.exe -m uvicorn alphaforge.api.app:app --reload
 ```
 
-Start the Stage 1 dashboard in another terminal:
+Start the dashboard in another terminal:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run dashboard/app.py
 ```
 
-The dashboard currently provides Overview and Market Data pages. The Market
-Data page calls `POST /market-data/history`, accepts comma-separated tickers,
-an inclusive start date, an exclusive end date, and an optional returns
-column. It displays interactive closing-price and returns charts plus the
-returned data table while preserving missing values. It checks
-`GET /health` through the FastAPI backend and clearly distinguishes a
-reachable API from an unavailable API. The API base URL defaults to
-`http://127.0.0.1:8000` and can be changed with `ALPHAFORGE_API_URL`.
-The dashboard does not connect directly to PostgreSQL and does not expose
-database credentials. Portfolio Analysis, Backtesting, and database-status
-pages are not implemented yet.
+The dashboard provides Overview, Market Data, Portfolio Analysis, Backtesting,
+and System Status pages. Market Data calls `POST /market-data/history` and
+displays interactive closing-price and returns charts while preserving missing
+values. Portfolio Analysis fetches prices, calculates aligned simple returns,
+and calls `POST /portfolio/analytics` for supported risk metrics and
+long-only minimum-volatility or maximum-Sharpe optimization. Incomplete
+observations are reported and never forward-filled. Backtesting calls
+`POST /backtests/run` using only the moving-average crossover strategy and
+displays the metrics and time series returned by the API. Backtests preserve
+the engine's next-session-open execution, complete-panel requirement, and
+long-only behavior. System Status checks application liveness through
+`GET /health`; it does not claim PostgreSQL or provider readiness.
+
+All date ranges use an inclusive start and exclusive end. The API base URL
+defaults to `http://127.0.0.1:8000` and can be changed with
+`ALPHAFORGE_API_URL`. The dashboard does not connect directly to PostgreSQL
+and does not expose database credentials. Ordinary dashboard tests use mocked
+HTTP responses and do not require an API, database, or internet connection.
