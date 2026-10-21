@@ -32,6 +32,20 @@ describe("frontend API helpers", () => {
     );
   });
 
+  it("normalizes trailing slashes in the configured production URL", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://alphaforge-0rbn.onrender.com/");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: "ok" }) }));
+
+    const { api, getApiBaseUrl } = await import("@/lib/api");
+
+    expect(getApiBaseUrl()).toBe("https://alphaforge-0rbn.onrender.com");
+    await expect(api.health()).resolves.toEqual({ status: "ok" });
+    expect(fetch).toHaveBeenCalledWith(
+      "https://alphaforge-0rbn.onrender.com/health",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("falls back to the local development API URL when no production URL is configured", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: "ok" }) }));
 
