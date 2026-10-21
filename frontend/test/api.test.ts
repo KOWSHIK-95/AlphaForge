@@ -46,6 +46,13 @@ describe("frontend API helpers", () => {
     );
   });
 
+  it("injects the production API URL into the Next.js client build config", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://alphaforge-0rbn.onrender.com");
+
+    const nextConfigModule = await import("@/next.config");
+    expect(nextConfigModule.default.env?.NEXT_PUBLIC_API_URL).toBe("https://alphaforge-0rbn.onrender.com");
+  });
+
   it("falls back to the local development API URL when no production URL is configured", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: "ok" }) }));
 
