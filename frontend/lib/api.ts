@@ -82,7 +82,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => request<{ status: string }>("/health"),
+  health: () => request<{ status: string }>("/health", { cache: "no-store" }),
   marketData: (tickers: string[], start: string, end: string) =>
     request<MarketDataResponse>("/market-data/history", {
       method: "POST",

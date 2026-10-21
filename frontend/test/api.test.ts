@@ -28,7 +28,7 @@ describe("frontend API helpers", () => {
     await expect(api.health()).resolves.toEqual({ status: "ok" });
     expect(fetch).toHaveBeenCalledWith(
       "https://alphaforge-0rbn.onrender.com/health",
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) }),
     );
   });
 
@@ -42,7 +42,7 @@ describe("frontend API helpers", () => {
     await expect(api.health()).resolves.toEqual({ status: "ok" });
     expect(fetch).toHaveBeenCalledWith(
       "https://alphaforge-0rbn.onrender.com/health",
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) }),
     );
   });
 
@@ -62,7 +62,30 @@ describe("frontend API helpers", () => {
     await expect(api.health()).resolves.toEqual({ status: "ok" });
     expect(fetch).toHaveBeenCalledWith(
       "http://127.0.0.1:8000/health",
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) }),
     );
+  });
+
+  it("reports a health request timeout when the abort signal fires", async () => {
+    vi.useFakeTimers();
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://alphaforge-0rbn.onrender.com");
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((_url: string, init: RequestInit) => (
+      new Promise((_resolve, reject) => {
+        init.signal?.addEventListener("abort", () => {
+          reject(new DOMException("The operation was aborted.", "AbortError"));
+        });
+      })
+    )));
+
+    const { api } = await import("@/lib/api");
+    const request = api.health();
+    const timeoutAssertion = expect(request).rejects.toMatchObject({
+      message: "The request timed out.",
+      status: null,
+    });
+    await vi.advanceTimersByTimeAsync(8000);
+
+    await timeoutAssertion;
+    vi.useRealTimers();
   });
 });
