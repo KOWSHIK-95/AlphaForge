@@ -39,7 +39,11 @@ export type BacktestResponse = {
   benchmark_equity?: { date: string; value: number }[];
 };
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+const LOCAL_API_URL = "http://127.0.0.1:8000";
+
+export function getApiBaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_API_URL ?? LOCAL_API_URL).trim().replace(/\/+$/, "") || LOCAL_API_URL;
+}
 
 export class ApiError extends Error {
   constructor(public readonly status: number | null, message: string) {
@@ -51,8 +55,9 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 8000);
+  const baseUrl = getApiBaseUrl();
   try {
-    const response = await fetch(`${API_URL}${path}`, { ...init, signal: controller.signal });
+    const response = await fetch(`${baseUrl}${path}`, { ...init, signal: controller.signal });
     let body: unknown = null;
     try {
       body = await response.json();
