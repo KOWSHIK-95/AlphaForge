@@ -35,7 +35,14 @@ def test_health_is_independent_of_market_data_provider():
     assert response.json() == {"status": "ok"}
 
 
-@pytest.mark.parametrize("origin", ["http://localhost:3000", "http://127.0.0.1:3000"])
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://alpha-forge-jrscdhlu5-quant-forge1.vercel.app",
+    ],
+)
 def test_cors_allows_frontend_origins(origin):
     response = client_for().options(
         "/health",

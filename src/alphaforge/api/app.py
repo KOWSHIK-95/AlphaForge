@@ -31,6 +31,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://alpha-forge-jrscdhlu5-quant-forge1.vercel.app",
     ],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
