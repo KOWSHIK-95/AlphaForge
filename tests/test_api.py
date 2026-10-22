@@ -41,6 +41,7 @@ def test_health_is_independent_of_market_data_provider():
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://alpha-forge-jrscdhlu5-quant-forge1.vercel.app",
+        "https://alpha-forge-inn6rhzus-quant-forge1.vercel.app",
     ],
 )
 def test_cors_allows_frontend_origins(origin):
@@ -54,6 +55,16 @@ def test_cors_allows_frontend_origins(origin):
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == origin
     assert "GET" in response.headers["access-control-allow-methods"]
+    assert response.headers.get("access-control-allow-credentials") is None
+
+
+def test_cors_allows_new_frontend_origin_for_health():
+    origin = "https://alpha-forge-inn6rhzus-quant-forge1.vercel.app"
+    response = client_for().get("/health", headers={"Origin": origin})
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+    assert response.headers["access-control-allow-origin"] == origin
     assert response.headers.get("access-control-allow-credentials") is None
 
 
