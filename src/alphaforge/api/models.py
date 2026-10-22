@@ -12,7 +12,7 @@ class ErrorResponse(BaseModel):
 
 
 class MarketDataRequest(BaseModel):
-    tickers: list[str] = Field(min_length=1)
+    tickers: list[str] = Field(min_length=1, max_length=50)
     start: date
     end: date
     include_returns: bool = False
@@ -31,6 +31,8 @@ class MarketDataRequest(BaseModel):
     def validate_range(self) -> "MarketDataRequest":
         if self.start >= self.end:
             raise ValueError("start must be earlier than end.")
+        if (self.end - self.start).days > 3650:
+            raise ValueError("date range must not exceed 10 years.")
         return self
 
 
@@ -56,13 +58,13 @@ class MarketBar(BaseModel):
 
 
 class AnalyticsRequest(BaseModel):
-    prices: list[float | None] = Field(min_length=1)
+    prices: list[float | None] = Field(min_length=1, max_length=100_000)
     risk_free_rate: float = 0.0
     periods_per_year: int = Field(default=252, gt=0)
 
 
 class PortfolioRequest(BaseModel):
-    asset_returns: dict[str, list[float]] = Field(min_length=1)
+    asset_returns: dict[str, list[float]] = Field(min_length=1, max_length=50)
     weights: dict[str, float] | None = None
     risk_free_rate: float = 0.0
     periods_per_year: int = Field(default=252, gt=0)
@@ -78,6 +80,8 @@ class PortfolioRequest(BaseModel):
             raise ValueError("all asset return series must have the same length.")
         if not lengths or not next(iter(lengths)):
             raise ValueError("asset_returns must contain observations.")
+        if next(iter(lengths)) > 100_000:
+            raise ValueError("asset_returns must contain at most 100000 observations.")
         if self.optimization == "none" and self.weights is None:
             raise ValueError("weights are required when optimization is none.")
         if self.weights is not None and set(self.weights) != set(self.asset_returns):
@@ -98,10 +102,10 @@ class StrategyConfig(BaseModel):
 
 
 class BacktestRequest(BaseModel):
-    tickers: list[str] | None = None
+    tickers: list[str] | None = Field(default=None, max_length=50)
     start: date | None = None
     end: date | None = None
-    history: list[MarketBar] | None = None
+    history: list[MarketBar] | None = Field(default=None, max_length=100_000)
     initial_capital: float = Field(gt=0)
     strategy: StrategyConfig
     benchmark_ticker: str | None = None
@@ -118,6 +122,12 @@ class BacktestRequest(BaseModel):
             raise ValueError("provide history or tickers with start and end.")
         if self.start is not None and self.end is not None and self.start >= self.end:
             raise ValueError("start must be earlier than end.")
+        if (
+            self.start is not None
+            and self.end is not None
+            and (self.end - self.start).days > 3650
+        ):
+            raise ValueError("date range must not exceed 10 years.")
         if self.tickers:
             normalized = [ticker.strip().upper() for ticker in self.tickers]
             if any(not ticker for ticker in normalized):

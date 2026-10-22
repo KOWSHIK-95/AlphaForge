@@ -33,6 +33,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://alpha-forge-jrscdhlu5-quant-forge1.vercel.app",
         "https://alpha-forge-inn6rhzus-quant-forge1.vercel.app",
+        "https://alpha-forge-bice.vercel.app",
     ],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],

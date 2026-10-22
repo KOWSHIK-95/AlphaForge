@@ -23,6 +23,9 @@ class MarketDataProvider(Protocol):
 class YFinanceProvider:
     """Fetch and reshape daily bars from yfinance."""
 
+    _TIMEOUT_SECONDS = 10
+    _MAX_ATTEMPTS = 2
+
     def fetch_history(
         self,
         tickers: Sequence[str],
@@ -30,17 +33,23 @@ class YFinanceProvider:
         end: date | datetime | str,
     ) -> pd.DataFrame:
         symbols = normalize_tickers(tickers)
-        try:
-            downloaded = yf.download(
-                tickers=symbols,
-                start=start,
-                end=end,
-                auto_adjust=False,
-                group_by="ticker",
-                progress=False,
-            )
-        except Exception as error:
-            raise RuntimeError(f"yfinance failed to download history for {symbols}.") from error
+        last_error: Exception | None = None
+        for _ in range(self._MAX_ATTEMPTS):
+            try:
+                downloaded = yf.download(
+                    tickers=symbols,
+                    start=start,
+                    end=end,
+                    auto_adjust=False,
+                    group_by="ticker",
+                    progress=False,
+                    timeout=self._TIMEOUT_SECONDS,
+                )
+                break
+            except Exception as error:
+                last_error = error
+        else:
+            raise RuntimeError(f"yfinance failed to download history for {symbols}.") from last_error
 
         if downloaded.empty:
             return pd.DataFrame(columns=MARKET_DATA_COLUMNS)

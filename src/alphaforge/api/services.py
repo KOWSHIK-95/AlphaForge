@@ -121,12 +121,29 @@ def calculate_portfolio(request: PortfolioRequest) -> dict[str, Any]:
             )
         else:
             optimized = optimizer(asset_returns, periods_per_year=request.periods_per_year)
+        optimized_returns = calculate_portfolio_returns(asset_returns, optimized.weights)
         result["optimization"] = {
             "weights": {str(key): float(value) for key, value in optimized.weights.items()},
             "expected_annual_return": optimized.expected_annual_return,
             "annualized_volatility": optimized.annualized_volatility,
             "sharpe_ratio": optimized.sharpe_ratio,
         }
+        result.update(
+            returns=series_values(optimized_returns),
+            cumulative_returns=series_values(calculate_cumulative_returns(optimized_returns)),
+            volatility=calculate_portfolio_volatility(optimized_returns),
+            annualized_volatility=calculate_portfolio_volatility(
+                optimized_returns, annualize=True
+            ),
+            sharpe_ratio=calculate_portfolio_sharpe_ratio(
+                optimized_returns,
+                risk_free_rate=request.risk_free_rate,
+                periods_per_year=request.periods_per_year,
+            ),
+            max_drawdown=calculate_portfolio_max_drawdown(optimized_returns),
+            var=calculate_historical_var(optimized_returns, request.confidence_level),
+            cvar=calculate_historical_cvar(optimized_returns, request.confidence_level),
+        )
     return result
 
 
