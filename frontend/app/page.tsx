@@ -9,7 +9,18 @@ import { Card, Notice, PageIntro } from "@/components/Ui";
 export default function Overview() {
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
   const [message, setMessage] = useState("");
-  useEffect(() => { api.health().then(() => setStatus("ok")).catch((error: ApiError) => { setStatus("error"); setMessage(error.message); }); }, []);
+  useEffect(() => {
+    let current = true;
+    api.health().then(() => {
+      if (current) setStatus("ok");
+    }).catch((error: ApiError) => {
+      if (current) {
+        setStatus("error");
+        setMessage(error.message);
+      }
+    });
+    return () => { current = false; };
+  }, []);
   return <><PageIntro eyebrow="Overview" title="Research, risk, and execution." description="AlphaForge connects validated market data with transparent portfolio analytics and historical strategy research." action={<span className="rounded-full border border-line bg-panel px-3 py-1.5 text-xs text-muted">Environment: local API</span>} />
     <div className="mb-6 grid gap-4 md:grid-cols-3"><Card className="p-5 md:col-span-2"><div className="flex items-start justify-between"><div><p className="text-xs uppercase tracking-[0.16em] text-muted">Platform status</p><h2 className="mt-3 text-xl font-semibold">Python analytics engine</h2><p className="mt-2 max-w-xl text-sm leading-6 text-muted">All calculations remain in the existing FastAPI and quantitative engine. This interface presents actual API responses without fabricated portfolio or performance data.</p></div>{status === "ok" ? <CheckCircle2 className="text-signal" /> : <CircleAlert className={status === "loading" ? "text-muted" : "text-danger"} />}</div><div className="mt-6">{status === "loading" ? <p className="text-sm text-muted">Checking API liveness…</p> : status === "ok" ? <Notice tone="success">API is reachable. Analysis tools are ready.</Notice> : <Notice>{message || "API is unavailable. Start the FastAPI service to continue."}</Notice>}</div></Card><Card className="p-5"><p className="text-xs uppercase tracking-[0.16em] text-muted">Data boundary</p><Database className="mt-5 text-signal" size={24} /><p className="mt-4 text-sm leading-6 text-muted">The browser communicates with FastAPI only. PostgreSQL credentials and provider connections remain server-side.</p></Card></div>
     <div className="grid gap-4 md:grid-cols-3">{[{ href: "/market-data", icon: LineChart, title: "Market data", text: "Inspect validated historical bars and price behavior." }, { href: "/portfolio", icon: ShieldCheck, title: "Portfolio analysis", text: "Measure risk, correlation, and supported optimizations." }, { href: "/backtesting", icon: ArrowUpRight, title: "Backtesting studio", text: "Evaluate the supported moving-average strategy." }].map(({ href, icon: Icon, title, text }) => <Link href={href} key={href} className="group rounded-xl border border-line bg-panel p-5 transition hover:-translate-y-0.5 hover:border-signal/40"><Icon className="text-signal" size={21} /><h3 className="mt-5 font-semibold">{title}<ArrowUpRight className="ml-2 inline transition group-hover:translate-x-1 group-hover:-translate-y-1" size={15} /></h3><p className="mt-2 text-sm leading-6 text-muted">{text}</p></Link>)}</div>
